@@ -1,14 +1,19 @@
+/*
+ * Utilisation de base du capteur MH-Z19B afin de lire la valeur de la concentration en CO2 en ppm (partie par million) par le biais d'un port série logiciel (software). 
+ * Le capteur est alimenté en 5V par la carte Arduino et les broches Rx et Tx du capteur sont connectées sur les broches 7 et 6 de la carte Arduino (Uno).
+ * 
+*/
 #include <SoftwareSerial.h>
 
 // Définition de la fonction qui retourne la concentration en CO2 en ppm
 uint16_t getCO2(void);
 
 // Création d'un port série software/logiciel (opposé à un port hardware/matériel)
-SoftwareSerial Serial2(6, 7); // Rx/Tx (Arduino) . Tx/Rx
+SoftwareSerial Serial2(6, 7); // Rx/Tx (Arduino) --> Tx/Rx
 
 void setup()
 {
-  // Initialisation du port software/logiciel et hardware/matériel
+  // Initialisation des ports série software/logiciel et hardware/matériel
   Serial2.begin(9600);
   Serial.begin(9600);
 
@@ -19,7 +24,7 @@ void setup()
 void loop()
 {
   // Définition des variables qui vont stocker la valeur mesurée et la dernière valeur différente
-  uint16_t old_CO2_val = 0;
+  static uint16_t old_CO2_val = 0;  // Utilisation d'une variable 'static' (statique) afin d'empêcher la redéfinition de la variable
   uint16_t temp_CO2_val = 0;
 
   // Lecture de la valeur de la concentration en CO2 en ppm/ Lecture de la valeur du capteur
@@ -29,7 +34,7 @@ void loop()
   if (temp_CO2_val != old_CO2_val) {
     // Stocke la valeur
     old_CO2_val = temp_CO2_val;
-    // Affiche la valeur
+    // Affiche la valeur en ppm entre 0 et 5000|2000 (5001, 5002, codes erreurs)
     Serial.println(temp_CO2_val);
   }
 }
@@ -72,7 +77,7 @@ uint16_t getCO2(void)  {
 
   // Lit la réponse et on la stocke dans le tableau 'response'
   Serial2.readBytes(response, 9);
-  
+
   // Vérifie si la trame est correct (commence bien par '0xFF' et se termine par '0x86')
   if (response[0] != 0xFF && response[1] != 0x86)
   {
@@ -84,7 +89,7 @@ uint16_t getCO2(void)  {
   for (int i = 1; i < 8; i++) {
     checksum += response[i];
   }
-  
+
   checksum = 0xFF - checksum;
   checksum++;
 
@@ -94,12 +99,12 @@ uint16_t getCO2(void)  {
   }
 
 
-// Récupère une valeur basse (low) et haute (high) afin de calculer la concentration en CO2
-// "(<type>) valeur" conversion de type. Type (implicite) de la valeur vers le type entre les parenthèses
-// Dans notre cas, hexadécimal vers entier non signé encodé sur 16 bit.
+  // Récupère une valeur basse (low) et haute (high) afin de calculer la concentration en CO2
+  // "(<type>) valeur" conversion de type. Type (implicite) de la valeur vers le type entre les parenthèses
+  // Dans notre cas, hexadécimal vers entier non signé encodé sur 16 bit.
   uint16_t low  = (uint16_t)response[3];
   uint16_t high = (uint16_t)response[2];
-  
+
   uint16_t ppm = (256 * high) + low;
 
   return ppm;
