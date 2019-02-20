@@ -78,7 +78,7 @@ uint16_t getCO2(void)  {
   // Lit la réponse et on la stocke dans le tableau 'response'
   Serial2.readBytes(response, 9);
 
-  // Vérifie si la trame est correct (commence bien par '0xFF' et se termine par '0x86')
+  // Vérifie si la trame est correct (commence bien par '0xFF 0x86')
   if (response[0] != 0xFF && response[1] != 0x86)
   {
     return 5001;
